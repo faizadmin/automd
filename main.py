@@ -50,4 +50,32 @@ async def kick(ctx, duration: str, user_id: int):
     # If already in VC, disconnect immediately
     if member.voice and member.voice.channel:
         try:
-            await
+            await member.move_to(None)
+        except:
+            await ctx.send("Failed to disconnect the user. Missing permissions?")
+            return
+
+    await ctx.send(f"{member.display_name} will be kicked from VC for {duration}.")
+
+@tasks.loop(seconds=5)
+async def monitor_voice_kicks():
+    now = datetime.utcnow()
+    expired = []
+
+    for user_id, end_time in active_kicks.items():
+        if now > end_time:
+            expired.append(user_id)
+            continue
+
+        for guild in bot.guilds:
+            member = guild.get_member(user_id)
+            if member and member.voice and member.voice.channel:
+                try:
+                    await member.move_to(None)
+                except:
+                    pass  # Ignore errors silently
+
+    for user_id in expired:
+        del active_kicks[user_id]
+
+bot.run("YOUR_BOT_TOKEN_HERE")  # 🔁 Yahan apna bot token paste karna
