@@ -12,7 +12,10 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix='.', intents=intents)
 
-# Dictionary to track kicked users and their end times
+# Only Faiz Bhai can use commands
+OWNER_ID = 1176678272579424258
+
+# Dict to track users on kick timer
 active_kicks = {}
 
 def parse_duration(duration_str):
@@ -32,8 +35,16 @@ async def on_ready():
     print(f'✅ Logged in as {bot.user.name}')
     monitor_voice_kicks.start()
 
+def only_owner(ctx):
+    if ctx.author.id != OWNER_ID:
+        asyncio.create_task(ctx.send("gadhe topa admi yeh sirf faiz bhai use kar sakte hai"))
+        return False
+    return True
+
 @bot.command()
 async def kick(ctx, duration: str, user_id: int):
+    if not only_owner(ctx): return
+
     time_delta = parse_duration(duration)
     if not time_delta:
         await ctx.send("❌ Invalid duration! Use like `1min`, `10min`, or `1hour`.")
@@ -58,6 +69,16 @@ async def kick(ctx, duration: str, user_id: int):
 
     await ctx.send(f"✅ {member.display_name} will be kicked from VC for {duration}.")
 
+@bot.command()
+async def unkick(ctx, user_id: int):
+    if not only_owner(ctx): return
+
+    if user_id in active_kicks:
+        del active_kicks[user_id]
+        await ctx.send(f"🟢 Kick timer removed for user <@{user_id}>.")
+    else:
+        await ctx.send("❌ User was not under kick timer.")
+
 @tasks.loop(seconds=5)
 async def monitor_voice_kicks():
     now = datetime.utcnow()
@@ -79,5 +100,5 @@ async def monitor_voice_kicks():
     for user_id in expired:
         del active_kicks[user_id]
 
-# 🔐 Token from Render environment variable
+# Use token from Render environment variable
 bot.run(os.environ["TOKEN"])
