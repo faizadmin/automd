@@ -3,6 +3,7 @@ from discord.ext import commands, tasks
 import asyncio
 import re
 from datetime import datetime, timedelta
+import os
 
 intents = discord.Intents.default()
 intents.voice_states = True
@@ -28,20 +29,20 @@ def parse_duration(duration_str):
 
 @bot.event
 async def on_ready():
-    print(f'Logged in as {bot.user.name}')
+    print(f'✅ Logged in as {bot.user.name}')
     monitor_voice_kicks.start()
 
 @bot.command()
 async def kick(ctx, duration: str, user_id: int):
     time_delta = parse_duration(duration)
     if not time_delta:
-        await ctx.send("Invalid duration! Use like `1min`, `10min`, or `1hour`.")
+        await ctx.send("❌ Invalid duration! Use like `1min`, `10min`, or `1hour`.")
         return
 
     guild = ctx.guild
     member = guild.get_member(user_id)
     if not member:
-        await ctx.send("User not found in this server.")
+        await ctx.send("❌ User not found in this server.")
         return
 
     end_time = datetime.utcnow() + time_delta
@@ -52,10 +53,10 @@ async def kick(ctx, duration: str, user_id: int):
         try:
             await member.move_to(None)
         except:
-            await ctx.send("Failed to disconnect the user. Missing permissions?")
+            await ctx.send("⚠️ Failed to disconnect the user. Missing permissions?")
             return
 
-    await ctx.send(f"{member.display_name} will be kicked from VC for {duration}.")
+    await ctx.send(f"✅ {member.display_name} will be kicked from VC for {duration}.")
 
 @tasks.loop(seconds=5)
 async def monitor_voice_kicks():
@@ -73,9 +74,10 @@ async def monitor_voice_kicks():
                 try:
                     await member.move_to(None)
                 except:
-                    pass  # Ignore errors silently
+                    pass  # Ignore silently
 
     for user_id in expired:
         del active_kicks[user_id]
 
-bot.run("YOUR_BOT_TOKEN_HERE")  # 🔁 Yahan apna bot token paste karna
+# 🔐 Token from Render environment variable
+bot.run(os.environ["TOKEN"])
