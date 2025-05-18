@@ -162,17 +162,18 @@ async def verifysetup(ctx):
         view=view
     )
 
-
 @bot.event
 async def on_message(message):
-    if message.channel.name.startswith("verify-") and message.attachments:
-        mod_log = bot.get_channel(MOD_LOG_CHANNEL_ID)
-        if mod_log:
-            file = message.attachments[0]
-            embed = discord.Embed(title="New Verification Request", color=discord.Color.blue())
-            embed.add_field(name="User", value=message.author.mention, inline=False)
-            embed.set_image(url=file.url)
-            await mod_log.send(embed=embed, view=ModView(message.author))
-    await bot.process_commands(message)
+    # Ignore bot's own messages
+    if message.author.bot:
+        return
+
+    # Only process messages in server text channels
+    if isinstance(message.channel, discord.TextChannel):
+        if message.channel.name.startswith("verify-") and message.attachments:
+            # Your existing logic to handle uploaded screenshots
+            pass
+
+    await bot.process_commands(message)  # Required to keep commands working
 
 bot.run(os.environ["TOKEN"])
