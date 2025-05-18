@@ -61,33 +61,37 @@ async def on_ready():
 async def setup(ctx):
     if not ctx.guild:
         return
+
     embed = discord.Embed(
         title="Free Fire Verification",
         description="Click the button below to start verification.",
         color=discord.Color.blue()
     )
-    view = View()
-    
-    @discord.ui.button(label="Click for Verification", style=discord.ButtonStyle.success)
-    async def verify_button(interaction: discord.Interaction, button: Button):
-        overwrites = {
-            ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-            interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-            ctx.guild.me: discord.PermissionOverwrite(read_messages=True)
-        }
-        category = ctx.guild.get_channel(CATEGORY_ID)
-        ticket_channel = await ctx.guild.create_text_channel(
-            name=f"verify-{interaction.user.name}",
-            overwrites=overwrites,
-            category=category
-        )
-        await interaction.response.send_message(f"Ticket created: {ticket_channel.mention}", ephemeral=True)
-        await ticket_channel.send(
-            f"{interaction.user.mention}, please upload your Free Fire profile screenshot for verification."
-        )
 
-    view.add_item(verify_button)
-    await ctx.send(embed=embed, view=view)
+    class SetupView(View):
+        def __init__(self):
+            super().__init__(timeout=None)
+
+        @discord.ui.button(label="Click for Verification", style=discord.ButtonStyle.success)
+        async def verify_button(self, interaction: discord.Interaction, button: Button):
+            overwrites = {
+                ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+                ctx.guild.me: discord.PermissionOverwrite(read_messages=True)
+            }
+            category = ctx.guild.get_channel(CATEGORY_ID)
+            ticket_channel = await ctx.guild.create_text_channel(
+                name=f"verify-{interaction.user.name}",
+                overwrites=overwrites,
+                category=category
+            )
+            await interaction.response.send_message(f"Ticket created: {ticket_channel.mention}", ephemeral=True)
+            await ticket_channel.send(
+                f"{interaction.user.mention}, please upload your Free Fire profile screenshot for verification."
+            )
+
+    await ctx.send(embed=embed, view=SetupView())
+
 
 
 @bot.event
