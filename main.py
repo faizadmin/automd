@@ -154,4 +154,4 @@ async def on_message(message):
 
 
 # Start bot using TOKEN from environment
-bot.run(os.getenv("TOKEN"))
+bot.run(TOKEN)
