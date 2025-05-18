@@ -164,16 +164,20 @@ async def verifysetup(ctx):
 
 @bot.event
 async def on_message(message):
-    # Ignore bot's own messages
-    if message.author.bot:
-        return
+    try:
+        if message.author.bot:
+            return
 
-    # Only process messages in server text channels
-    if isinstance(message.channel, discord.TextChannel):
-        if message.channel.name.startswith("verify-") and message.attachments:
-            # Your existing logic to handle uploaded screenshots
-            pass
+        if isinstance(message.channel, discord.TextChannel):
+            if message.channel.name.startswith("verify-") and message.attachments:
+                # process uploaded screenshot
+                await message.channel.send("Screenshot received. Click the button below to submit.")
+                # send button etc.
+        
+        await bot.process_commands(message)
 
-    await bot.process_commands(message)  # Required to keep commands working
+    except Exception as e:
+        print(f"❌ Error in on_message: {e}")
+
 
 bot.run(os.environ["TOKEN"])
