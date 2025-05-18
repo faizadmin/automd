@@ -110,7 +110,14 @@ class VerificationButton(View):
             category=category
         )
 
-        await channel.send(f"{interaction.user.mention}, please upload your Free Fire profile screenshot.")
+       await channel.send(f"{interaction.user.mention}, please upload your Free Fire profile screenshot.")
+
+# Let the user know the ticket was created
+await interaction.response.send_message(
+    f"✅ Ticket created: {channel.mention}. Please upload your Free Fire profile screenshot there.",
+    ephemeral=True
+)
+
 
 
 # Command to send setup panel with button
