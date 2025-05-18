@@ -80,29 +80,13 @@ class ApplicationView(View):
         self.ticket_channel = ticket_channel
         self.app_message = app_message
 
- @discord.ui.button(label="Click for Verification", style=discord.ButtonStyle.success)
-async def verify(self, interaction: discord.Interaction, button: Button):
-    guild = bot.get_guild(GUILD_ID)
-    category = discord.utils.get(guild.categories, id=CATEGORY_ID)
-
-    overwrites = {
-        guild.default_role: discord.PermissionOverwrite(view_channel=False),
-        interaction.user: discord.PermissionOverwrite(view_channel=True, send_messages=True, attach_files=True, read_message_history=True)
-    }
-
-    channel = await guild.create_text_channel(
-        name=f"verify-{interaction.user.name}",
-        overwrites=overwrites,
-        category=category
-    )
-
-    await channel.send(f"{interaction.user.mention}, please upload your Free Fire profile screenshot.")
-
-    await interaction.response.send_message(
-        f"✅ Ticket created: {channel.mention}. Please upload your Free Fire profile screenshot there.",
-        ephemeral=True
-    )
-
+    @discord.ui.button(label="Change Name", style=discord.ButtonStyle.primary)
+    async def change_name(self, interaction: discord.Interaction, button: Button):
+        if interaction.user.guild_permissions.manage_nicknames:
+            modal = NicknameModal(self.user, self.ticket_channel, self.app_message)
+            await interaction.response.send_modal(modal)
+        else:
+            await interaction.response.send_message("❌ You don't have permission.", ephemeral=True)
 
 
 # Button shown to users for starting verification
@@ -126,14 +110,13 @@ class VerificationButton(View):
             category=category
         )
 
-       await channel.send(f"{interaction.user.mention}, please upload your Free Fire profile screenshot.")
+        await channel.send(f"{interaction.user.mention}, please upload your Free Fire profile screenshot.")
 
-# Let the user know the ticket was created
-await interaction.response.send_message(
-    f"✅ Ticket created: {channel.mention}. Please upload your Free Fire profile screenshot there.",
-    ephemeral=True
-)
-
+        # Let the user know the ticket was created
+        await interaction.response.send_message(
+            f"✅ Ticket created: {channel.mention}. Please upload your Free Fire profile screenshot there.",
+            ephemeral=True
+        )
 
 
 # Command to send setup panel with button
