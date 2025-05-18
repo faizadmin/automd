@@ -2,9 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from discord.ui import Button, View, Modal, TextInput
-from dotenv import load_dotenv
 
-load_dotenv()  # Load environment variables from .env (for local testing)
 
 intents = discord.Intents.default()
 intents.messages = True
