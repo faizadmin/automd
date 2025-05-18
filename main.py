@@ -11,6 +11,7 @@ intents.guilds = True
 intents.members = True
 
 bot = commands.Bot(command_prefix=".", intents=intents)
+TOKEN = os.getenv("TOKEN")  # Environment variable from Render
 
 # Replace with your actual IDs
 GUILD_ID = 856739130850541618
