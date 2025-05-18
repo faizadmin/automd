@@ -144,23 +144,24 @@ class ModView(View):
 
 @bot.command()
 async def verifysetup(ctx):
-    view = View()
+    """Sends the verification button message."""
+    view = discord.ui.View()
+    
+    class VerifyButton(discord.ui.Button):
+        def __init__(self):
+            super().__init__(label="Click for Verification", style=discord.ButtonStyle.success)
 
-    @discord.ui.button(label="Click for Verification", style=ButtonStyle.success)
-    async def verify_button(interaction: discord.Interaction, button: Button):
-        guild = interaction.guild
-        member = interaction.user
-        category = guild.get_channel(VERIFY_CATEGORY_ID)
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(view_channel=False),
-            member: discord.PermissionOverwrite(view_channel=True, send_messages=True, attach_files=True)
-        }
-        channel = await guild.create_text_channel(name=f"verify-{member.name}", overwrites=overwrites, category=category)
-        await channel.send(f"{member.mention} Please upload your Free Fire profile screenshot below.", view=VerificationView(member))
-        await interaction.response.send_message(f"✅ Verification channel created: {channel.mention}", ephemeral=True)
+        async def callback(self, interaction: discord.Interaction):
+            await interaction.response.send_message("🔧 Processing... Please wait.", ephemeral=True)
+            # You can call the function to create ticket channel here, or it will be in another handler.
 
-    view.add_item(verify_button)
-    await ctx.send("Click below to start verification:", view=view)
+    view.add_item(VerifyButton())
+
+    await ctx.send(
+        "**🔐 Click below to verify your Free Fire account**",
+        view=view
+    )
+
 
 @bot.event
 async def on_message(message):
