@@ -13,7 +13,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='.', intents=intents)
 
 OWNER_ID = 1176678272579424258
-MOD_CHANNEL_ID = 123456789012345678  # 🔁 Replace with your mod-only channel ID
+MOD_CHANNEL_ID = 982222931893583892  # 🔁 Replace with your mod-only channel ID
 active_kicks = {}
 
 def parse_duration(duration_str):
