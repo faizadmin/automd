@@ -230,5 +230,5 @@ async def his(ctx, user: discord.User = None):
     await ctx.send(text)
 
 # Run the bot
-TOKEN = os.getenv("DISCORD_TOKEN")  # Put your bot token in environment variable for safety
+TOKEN = os.getenv("TOKEN")  # Put your bot token in environment variable for safety
 bot.run(TOKEN)
