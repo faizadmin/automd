@@ -29,21 +29,18 @@ class ChangeNameModal(Modal):
         self.new_name = TextInput(label="Enter New Nickname")
         self.add_item(self.new_name)
 
-          async def on_submit(self, interaction: discord.Interaction):
+    async def on_submit(self, interaction: discord.Interaction):
         old_name = self.target_user.display_name
         new_name = self.new_name.value
 
         try:
-            # Change nickname
             await self.target_user.edit(nick=new_name)
 
-            # Delete the mod's action message
             try:
                 await self.message_to_delete.delete()
             except Exception as e:
                 print(f"[Warning] Couldn't delete message: {e}")
 
-            # Add role
             role = interaction.guild.get_role(GIVE_ROLE_ID)
             if role:
                 try:
@@ -51,7 +48,6 @@ class ChangeNameModal(Modal):
                 except Exception as e:
                     print(f"[Warning] Couldn't assign role: {e}")
 
-            # Count and log
             mod_name = str(self.mod_user)
             mod_id = self.mod_user.id
             mod_change_counts[mod_name] = mod_change_counts.get(mod_name, 0) + 1
@@ -65,7 +61,6 @@ class ChangeNameModal(Modal):
             }
             mod_history.setdefault(mod_id, []).append(log_entry)
 
-            # Add reactions to image upload message
             uploaded_msg_id = message_map.get(self.target_user.id)
             if uploaded_msg_id:
                 try:
@@ -76,13 +71,11 @@ class ChangeNameModal(Modal):
                 except Exception as e:
                     print(f"[Reaction Error] {e}")
 
-            # Respond success
             await interaction.response.send_message(
                 f"✅ Name changed from `{old_name}` to `{new_name}` by {self.mod_user.mention}",
                 ephemeral=False
             )
 
-            # Follow up with count
             await interaction.followup.send(
                 f"📊 Total names changed by **{mod_name}**: `{count}`", ephemeral=False
             )
@@ -97,7 +90,6 @@ class ChangeNameModal(Modal):
             except:
                 pass
 
-
 class ChangeNameView(View):
     def __init__(self, target_user):
         super().__init__(timeout=None)
@@ -107,13 +99,12 @@ class ChangeNameView(View):
     async def change_name(self, interaction: discord.Interaction, button: Button):
         if not interaction.user.guild_permissions.manage_nicknames:
             return await interaction.response.send_message("🚫 You don't have permission to change names.", ephemeral=True)
-
         modal = ChangeNameModal(target_user=self.target_user, message_to_delete=interaction.message, mod_user=interaction.user)
         await interaction.response.send_modal(modal)
 
 @bot.event
 async def on_ready():
-    print(f"✅ Bot is online as {bot.user}!")
+    print(f"✅ Logged in as {bot.user}!")
 
 @bot.event
 async def on_message(message):
@@ -151,12 +142,12 @@ async def his(ctx, user: discord.User = None):
     if not history:
         return await ctx.send(f"ℹ️ No rename history found for **{user}**.")
 
-    text = f"📜 Name changes by **{user}**:\n"
+    text = f"📝 Name changes by **{user}**:\n"
     for i, entry in enumerate(history[-5:], 1):
         target = entry['user']
         text += f"{i}. `{entry['old']}` → `{entry['new']}` for **{target}** ({entry['time']})\n"
     await ctx.send(text)
 
-# Run bot
+# 🔻 Run the bot
 TOKEN = os.getenv("TOKEN")
 bot.run(TOKEN)
