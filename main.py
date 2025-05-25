@@ -1,14 +1,14 @@
-import os
 import discord
 from discord.ext import commands
 from discord.ui import View, Button, Modal, TextInput
+import os
 
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 intents.guilds = True
 
-bot = commands.Bot(command_prefix="&", intents=intents)
+bot = commands.Bot(command_prefix="22", intents=intents)
 TOKEN = os.getenv("TOKEN")  # Environment variable from Render
 
 # Replace with your real IDs
@@ -17,8 +17,8 @@ UPLOAD_CHANNEL_ID = 982222931893583892
 MOD_CHANNEL_ID = 1376090022788333670
 GIVE_ROLE_ID = 955703181738901534
 
-# Dictionary to track total name changes per mod
-mod_change_counts = {}
+mod_change_counts = {}  # { "mod#1234": count }
+user_history = {}       # { user_id: [ {old_name, new_name, by, time} ] }
 
 class ChangeNameModal(Modal):
     def __init__(self, target_user, message_to_delete, mod_user):
@@ -31,23 +31,33 @@ class ChangeNameModal(Modal):
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
-            await self.target_user.edit(nick=self.new_name.value)
+            old_name = self.target_user.display_name
+            new_name = self.new_name.value
+
+            await self.target_user.edit(nick=new_name)
             await self.message_to_delete.delete()
 
-            # Assign role to target user
+            # Role assign
             role = interaction.guild.get_role(GIVE_ROLE_ID)
             if role:
                 await self.target_user.add_roles(role)
 
-            # Count update
+            # Log mod count
             mod_name = str(self.mod_user)
             mod_change_counts[mod_name] = mod_change_counts.get(mod_name, 0) + 1
             count = mod_change_counts[mod_name]
 
-            # Response messages
+            # Log user history
+            entry = {
+                "old": old_name,
+                "new": new_name,
+                "by": mod_name,
+                "time": discord.utils.format_dt(discord.utils.utcnow(), style="R")
+            }
+            user_history.setdefault(self.target_user.id, []).append(entry)
+
             await interaction.response.send_message(
-                f"✅ Name changed successfully by **{self.mod_user.mention}**\nNew name: `{self.new_name.value}`",
-                ephemeral=False
+                f"✅ Name changed by **{self.mod_user.mention}**\nNew name: `{new_name}`", ephemeral=False
             )
             await interaction.channel.send(f"🧾 Total names changed by **{mod_name}**: `{count}`")
         except Exception as e:
@@ -80,7 +90,34 @@ async def on_message(message):
 
                 view = ChangeNameView(target_user=message.author)
                 await bot.get_channel(MOD_CHANNEL_ID).send(embed=embed, view=view)
+
     await bot.process_commands(message)
 
-bot.run(TOKEN)
+# ✅ Command: 22top — show mods with most nickname changes
+@bot.command()
+async def top(ctx):
+    if not mod_change_counts:
+        return await ctx.send("❌ No nickname changes yet.")
+    sorted_mods = sorted(mod_change_counts.items(), key=lambda x: x[1], reverse=True)
+    text = "**🏆 Top Name Changers:**\n"
+    for idx, (mod, count) in enumerate(sorted_mods, 1):
+        text += f"{idx}. **{mod}** — `{count}` names changed\n"
+    await ctx.send(text)
 
+# ✅ Command: 22his @user or user_id — show nickname history
+@bot.command()
+async def his(ctx, user: discord.User = None):
+    if not user:
+        return await ctx.send("❌ Please mention a user or provide user ID.")
+    history = user_history.get(user.id)
+    if not history:
+        return await ctx.send("ℹ️ No nickname change history found for this user.")
+
+    text = f"📜 Nickname change history for **{user}**:\n"
+    for i, entry in enumerate(history[-5:], 1):
+        text += f"{i}. `{entry['old']}` → `{entry['new']}` by **{entry['by']}** ({entry['time']})\n"
+    await ctx.send(text)
+
+# 👇 Use your token setup here
+
+bot.run(TOKEN)
