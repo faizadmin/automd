@@ -55,9 +55,16 @@ class ChangeNameModal(Modal):
             }
             mod_history.setdefault(mod_id, []).append(log_entry)
 
-            await interaction.response.send_message(
+            # Send confirmation and add DONE reaction
+            confirmation_msg = await interaction.response.send_message(
                 f"\u2705 Name changed to `{new_name}` by {self.mod_user.mention}", ephemeral=False
             )
+
+            msg = await interaction.original_response()
+            for ch in "DONE":
+                await msg.add_reaction(ch)
+            await msg.add_reaction("\u2705")  # ✅
+
         except Exception as e:
             await interaction.response.send_message(f"\u274C Error: {e}", ephemeral=True)
 
