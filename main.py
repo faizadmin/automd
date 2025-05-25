@@ -30,57 +30,53 @@ class ChangeNameModal(Modal):
         self.add_item(self.new_name)
 
     async def on_submit(self, interaction: discord.Interaction):
-    try:
-        old_name = self.target_user.display_name
-        new_name = self.new_name.value
+        try:
+            old_name = self.target_user.display_name
+            new_name = self.new_name.value
 
-        await self.target_user.edit(nick=new_name)
-        await self.message_to_delete.delete()
+            await self.target_user.edit(nick=new_name)
+            await self.message_to_delete.delete()
 
-        # Assign role after name change
-        role = interaction.guild.get_role(GIVE_ROLE_ID)
-        if role:
-            await self.target_user.add_roles(role)
+            # Assign role after name change
+            role = interaction.guild.get_role(GIVE_ROLE_ID)
+            if role:
+                await self.target_user.add_roles(role)
 
-        # Update mod stats
-        mod_name = str(self.mod_user)
-        mod_id = self.mod_user.id
-        mod_change_counts[mod_name] = mod_change_counts.get(mod_name, 0) + 1
+            # Update mod stats
+            mod_name = str(self.mod_user)
+            mod_id = self.mod_user.id
+            mod_change_counts[mod_name] = mod_change_counts.get(mod_name, 0) + 1
 
-        # Log mod change history
-        log_entry = {
-            "user": self.target_user,
-            "old": old_name,
-            "new": new_name,
-            "time": discord.utils.format_dt(discord.utils.utcnow(), style="R")
-        }
-        mod_history.setdefault(mod_id, []).append(log_entry)
+            # Log mod change history
+            log_entry = {
+                "user": self.target_user,
+                "old": old_name,
+                "new": new_name,
+                "time": discord.utils.format_dt(discord.utils.utcnow(), style="R")
+            }
+            mod_history.setdefault(mod_id, []).append(log_entry)
 
-        # Confirmation message with total count
-        total_changes = mod_change_counts.get(mod_name, 0)
-        await interaction.response.send_message(
-            f"✅ Name changed to `{new_name}` by {self.mod_user.mention}\n"
-            f"📊 Total names changed by you: `{total_changes}`",
-            ephemeral=False
-        )
+            # Confirmation message for command user
+            await interaction.response.send_message(
+                f"✅ Name changed to `{new_name}` by {self.mod_user.mention}", ephemeral=False
+            )
 
-        # Add reactions to the original uploaded image message
-        upload_message_id = message_map.get(self.target_user.id)
-        if upload_message_id:
-            upload_channel = interaction.guild.get_channel(UPLOAD_CHANNEL_ID)
-            if upload_channel.permissions_for(interaction.guild.me).add_reactions:
-                try:
-                    original_msg = await upload_channel.fetch_message(upload_message_id)
-                    for ch in ["🇩", "🇴", "🇳", "🇪", "✅"]:
-                        await original_msg.add_reaction(ch)
-                except Exception as e:
-                    print(f"Failed to add reactions: {e}")
-            else:
-                print("Bot missing Add Reactions permission in upload channel")
+            # Add reactions to the original uploaded image message
+            upload_message_id = message_map.get(self.target_user.id)
+            if upload_message_id:
+                upload_channel = interaction.guild.get_channel(UPLOAD_CHANNEL_ID)
+                if upload_channel.permissions_for(interaction.guild.me).add_reactions:
+                    try:
+                        original_msg = await upload_channel.fetch_message(upload_message_id)
+                        for ch in ["🇩", "🇴", "🇳", "🇪", "✅"]:
+                            await original_msg.add_reaction(ch)
+                    except Exception as e:
+                        print(f"Failed to add reactions: {e}")
+                else:
+                    print("Bot missing Add Reactions permission in upload channel")
 
-    except Exception as e:
-        await interaction.response.send_message(f"❌ Error: {e}", ephemeral=True)
-
+        except Exception as e:
+            await interaction.response.send_message(f"❌ Error: {e}", ephemeral=True)
 
 class ChangeNameView(View):
     def __init__(self, target_user):
