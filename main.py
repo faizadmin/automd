@@ -103,24 +103,19 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     if message.channel.id == UPLOAD_CHANNEL_ID and message.attachments:
-    for attachment in message.attachments:
-        if attachment.content_type and attachment.content_type.startswith("image/"):
-            embed = discord.Embed(title="📅 New Verification Request", color=discord.Color.blue())
-            embed.set_image(url=attachment.url)
-            embed.set_footer(text=f"From: {message.author} ({message.author.id})")
+        for attachment in message.attachments:
+            if attachment.content_type and attachment.content_type.startswith("image/"):
+                embed = discord.Embed(title="📅 New Verification Request", color=discord.Color.blue())
+                embed.set_image(url=attachment.url)
+                embed.set_footer(text=f"From: {message.author} ({message.author.id})")
 
-            view = ChangeNameView(target_user=message.author)
-            sent_msg = await bot.get_channel(MOD_CHANNEL_ID).send(embed=embed, view=view)
+                view = ChangeNameView(target_user=message.author)
+                sent_msg = await bot.get_channel(MOD_CHANNEL_ID).send(embed=embed, view=view)
 
-            # Store the uploaded message ID for reaction later
-            message_map[message.author.id] = message.id
+                # Store the uploaded message ID for reaction later
+                message_map[message.author.id] = message.id
 
-            # Reply to user after image upload
-            try:
-                await message.reply("📩 **Thanks for sharing image!**\nYou will be verified in few hours after our channel moderator review.")
-            except Exception as e:
-                print(f"Failed to reply to image message: {e}")
- await bot.process_commands(message)
+    await bot.process_commands(message)
 
 # Command: 22top — show top nickname changers
 @bot.command()
@@ -128,7 +123,7 @@ async def top(ctx):
     if not mod_change_counts:
         return await ctx.send("❌ No nickname changes yet.")
     sorted_mods = sorted(mod_change_counts.items(), key=lambda x: x[1], reverse=True)
-    text = "**🎖 Top Mods:**\n"
+    text = "**🎖 Top Name Changers:**\n"
     for idx, (mod, count) in enumerate(sorted_mods, 1):
         text += f"{idx}. **{mod}** — `{count}` names changed\n"
     await ctx.send(text)
