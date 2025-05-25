@@ -105,9 +105,13 @@ async def on_message(message):
     if message.channel.id == UPLOAD_CHANNEL_ID and message.attachments:
         for attachment in message.attachments:
             if attachment.content_type and attachment.content_type.startswith("image/"):
-                embed = discord.Embed(title="📅 New Verification Request", color=discord.Color.blue())
-                embed.set_image(url=attachment.url)
-                embed.set_footer(text=f"From: {message.author} ({message.author.id})")
+               embed = discord.Embed(
+    title="📅 New Verification Request",
+    description=f"👤 User: {message.author.mention}\n🆔 ID: `{message.author.id}`",
+    color=discord.Color.blue()
+)
+embed.set_image(url=attachment.url)
+
 
                 view = ChangeNameView(target_user=message.author)
                 sent_msg = await bot.get_channel(MOD_CHANNEL_ID).send(embed=embed, view=view)
