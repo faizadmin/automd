@@ -58,8 +58,12 @@ class ChangeNameModal(Modal):
 
             # Confirmation message for command user
             await interaction.response.send_message(
-                f"✅ Name changed to `{new_name}` by {self.mod_user.mention}", ephemeral=False
-            )
+    f"✅ UserID: `{self.target_user.id}`\n"
+    f"Old Name: `{old_name}`\n"
+    f"New Name: `{new_name}`\n"
+    f"Status: Verified",
+    ephemeral=False
+)
 
             # Add reactions to the original uploaded image message
             upload_message_id = message_map.get(self.target_user.id)
