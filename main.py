@@ -145,8 +145,9 @@ class CancelConfirmView(View):
                 original_msg = await upload_channel.fetch_message(upload_message_id)
 
                 # Add reactions: D E C L I N E ❌
-                cancel_reacts = ["D", "E", "C", "L", "I", "N", "E", "❌"]
-                for emoji in cancel_reacts:
+                decline_reacts = ["🇩", "🇪", "🇨", "🇱", "🇮", "🇳", "🇪", "❌"]
+
+                for emoji in decline_reacts:
                     await original_msg.add_reaction(emoji)
 
                 if original_msg.attachments:
