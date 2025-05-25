@@ -14,6 +14,8 @@ bot = commands.Bot(command_prefix="22", intents=intents)
 GUILD_ID = 856739130850541618
 UPLOAD_CHANNEL_ID = 982222931893583892
 MOD_CHANNEL_ID = 1376090022788333670
+MOD_ACTIVITY_CHANNEL_ID = 1376231467922755685  # Yahan apne mod activity text channel ka ID daalo
+
 GIVE_ROLE_ID = 955703181738901534
 
 mod_change_counts = {}
