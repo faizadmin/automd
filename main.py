@@ -37,11 +37,12 @@ class ChangeNameModal(Modal):
             await self.target_user.edit(nick=new_name)
             await self.message_to_delete.delete()
 
-            # Role assign
+            # Assign role after name change
             role = interaction.guild.get_role(GIVE_ROLE_ID)
             if role:
                 await self.target_user.add_roles(role)
 
+            # Update mod stats
             mod_name = str(self.mod_user)
             mod_id = self.mod_user.id
             mod_change_counts[mod_name] = mod_change_counts.get(mod_name, 0) + 1
@@ -55,25 +56,27 @@ class ChangeNameModal(Modal):
             }
             mod_history.setdefault(mod_id, []).append(log_entry)
 
-            # Send confirmation
+            # Confirmation message for command user
             await interaction.response.send_message(
-                f"\u2705 Name changed to `{new_name}` by {self.mod_user.mention}", ephemeral=False
+                f"✅ Name changed to `{new_name}` by {self.mod_user.mention}", ephemeral=False
             )
 
-            # React to the original uploaded image message
+            # Add reactions to the original uploaded image message
             upload_message_id = message_map.get(self.target_user.id)
             if upload_message_id:
                 upload_channel = interaction.guild.get_channel(UPLOAD_CHANNEL_ID)
-                try:
-                    original_msg = await upload_channel.fetch_message(upload_message_id)
-                    for ch in "DONE":
-                        await original_msg.add_reaction(ch)
-                    await original_msg.add_reaction("\u2705")  # ✅
-                except discord.NotFound:
-                    pass
+                if upload_channel.permissions_for(interaction.guild.me).add_reactions:
+                    try:
+                        original_msg = await upload_channel.fetch_message(upload_message_id)
+                        for ch in ["🇩", "🇴", "🇳", "🇪", "✅"]:
+                            await original_msg.add_reaction(ch)
+                    except Exception as e:
+                        print(f"Failed to add reactions: {e}")
+                else:
+                    print("Bot missing Add Reactions permission in upload channel")
 
         except Exception as e:
-            await interaction.response.send_message(f"\u274C Error: {e}", ephemeral=True)
+            await interaction.response.send_message(f"❌ Error: {e}", ephemeral=True)
 
 class ChangeNameView(View):
     def __init__(self, target_user):
@@ -83,58 +86,60 @@ class ChangeNameView(View):
     @discord.ui.button(label="Change Name", style=discord.ButtonStyle.primary)
     async def change_name(self, interaction: discord.Interaction, button: Button):
         if not interaction.user.guild_permissions.manage_nicknames:
-            return await interaction.response.send_message("\ud83d\udeab You don't have permission to change names.", ephemeral=True)
+            return await interaction.response.send_message("🚫 You don't have permission to change names.", ephemeral=True)
         modal = ChangeNameModal(target_user=self.target_user, message_to_delete=interaction.message, mod_user=interaction.user)
         await interaction.response.send_modal(modal)
 
 @bot.event
 async def on_ready():
-    print(f"\u2705 Logged in as {bot.user}!")
+    print(f"✅ Logged in as {bot.user}!")
 
 @bot.event
 async def on_message(message):
     if message.channel.id == UPLOAD_CHANNEL_ID and message.attachments:
         for attachment in message.attachments:
             if attachment.content_type and attachment.content_type.startswith("image/"):
-                embed = discord.Embed(title="\ud83d\udcc5 New Verification Request", color=discord.Color.blue())
+                embed = discord.Embed(title="📅 New Verification Request", color=discord.Color.blue())
                 embed.set_image(url=attachment.url)
                 embed.set_footer(text=f"From: {message.author} ({message.author.id})")
 
                 view = ChangeNameView(target_user=message.author)
                 sent_msg = await bot.get_channel(MOD_CHANNEL_ID).send(embed=embed, view=view)
+
+                # Store the uploaded message ID for reaction later
                 message_map[message.author.id] = message.id
 
     await bot.process_commands(message)
 
-# \u2705 Command: 22top — show top nickname changers
+# Command: 22top — show top nickname changers
 @bot.command()
 async def top(ctx):
     if not mod_change_counts:
-        return await ctx.send("\u274C No nickname changes yet.")
+        return await ctx.send("❌ No nickname changes yet.")
     sorted_mods = sorted(mod_change_counts.items(), key=lambda x: x[1], reverse=True)
-    text = "**\ud83c\udfc6 Top Name Changers:**\n"
+    text = "**🎖 Top Name Changers:**\n"
     for idx, (mod, count) in enumerate(sorted_mods, 1):
         text += f"{idx}. **{mod}** — `{count}` names changed\n"
     await ctx.send(text)
 
-# \u2705 Command: 22his @mod — show who that mod has renamed
+# Command: 22his @mod — show who that mod has renamed
 @bot.command()
 async def his(ctx, user: discord.User = None):
     if not user:
-        return await ctx.send("\u274C Please mention a moderator or give user ID.")
+        return await ctx.send("❌ Please mention a moderator or provide user ID.")
 
     mod_id = user.id
     history = mod_history.get(mod_id)
 
     if not history:
-        return await ctx.send(f"\u2139\ufe0f No rename history found for **{user}**.")
+        return await ctx.send(f"ℹ️ No rename history found for **{user}**.")
 
-    text = f"\ud83d\udcdc Name changes by **{user}**:\n"
-    for i, entry in enumerate(history[-5:], 1):  # last 5
+    text = f"📜 Name changes by **{user}**:\n"
+    for i, entry in enumerate(history[-5:], 1):  # last 5 entries
         target = entry['user']
         text += f"{i}. `{entry['old']}` → `{entry['new']}` for **{target}** ({entry['time']})\n"
     await ctx.send(text)
 
-# 🔻 Run the bot
-TOKEN = os.getenv("TOKEN")  # Environment variable from Render
+# Run the bot
+TOKEN = os.getenv("TOKEN")
 bot.run(TOKEN)
