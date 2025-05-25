@@ -18,7 +18,7 @@ MOD_CHANNEL_ID = 1376090022788333670
 GIVE_ROLE_ID = 955703181738901534
 
 mod_change_counts = {}  # { "mod#1234": count }
-user_history = {}       # { user_id: [ {old_name, new_name, by, time} ] }
+mod_history = {}        # { mod_id: [ {user, old, new, time} ] }
 
 class ChangeNameModal(Modal):
     def __init__(self, target_user, message_to_delete, mod_user):
@@ -42,19 +42,19 @@ class ChangeNameModal(Modal):
             if role:
                 await self.target_user.add_roles(role)
 
-            # Log mod count
             mod_name = str(self.mod_user)
+            mod_id = self.mod_user.id
             mod_change_counts[mod_name] = mod_change_counts.get(mod_name, 0) + 1
             count = mod_change_counts[mod_name]
 
-            # Log user history
-            entry = {
+            # Log mod change history
+            log_entry = {
+                "user": self.target_user,
                 "old": old_name,
                 "new": new_name,
-                "by": mod_name,
                 "time": discord.utils.format_dt(discord.utils.utcnow(), style="R")
             }
-            user_history.setdefault(self.target_user.id, []).append(entry)
+            mod_history.setdefault(mod_id, []).append(log_entry)
 
             await interaction.response.send_message(
                 f"✅ Name changed by **{self.mod_user.mention}**\nNew name: `{new_name}`", ephemeral=False
@@ -93,7 +93,7 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-# ✅ Command: 22top — show mods with most nickname changes
+# ✅ Command: 22top — show top nickname changers
 @bot.command()
 async def top(ctx):
     if not mod_change_counts:
@@ -104,20 +104,24 @@ async def top(ctx):
         text += f"{idx}. **{mod}** — `{count}` names changed\n"
     await ctx.send(text)
 
-# ✅ Command: 22his @user or user_id — show nickname history
+# ✅ Command: 22his @mod — show who that mod has renamed
 @bot.command()
 async def his(ctx, user: discord.User = None):
     if not user:
-        return await ctx.send("❌ Please mention a user or provide user ID.")
-    history = user_history.get(user.id)
-    if not history:
-        return await ctx.send("ℹ️ No nickname change history found for this user.")
+        return await ctx.send("❌ Please mention a moderator or give user ID.")
+    
+    mod_id = user.id
+    history = mod_history.get(mod_id)
 
-    text = f"📜 Nickname change history for **{user}**:\n"
-    for i, entry in enumerate(history[-5:], 1):
-        text += f"{i}. `{entry['old']}` → `{entry['new']}` by **{entry['by']}** ({entry['time']})\n"
+    if not history:
+        return await ctx.send(f"ℹ️ No rename history found for **{user}**.")
+
+    text = f"📜 Name changes by **{user}**:\n"
+    for i, entry in enumerate(history[-5:], 1):  # last 5
+        target = entry['user']
+        text += f"{i}. `{entry['old']}` → `{entry['new']}` for **{target}** ({entry['time']})\n"
     await ctx.send(text)
 
-# 👇 Use your token setup here
+# 👇 Add your real bot token here
 
 bot.run(TOKEN)
