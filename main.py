@@ -29,15 +29,16 @@ class ChangeNameModal(Modal):
         self.new_name = TextInput(label="Enter New Nickname")
         self.add_item(self.new_name)
 
-    async def on_submit(self, interaction: discord.Interaction):
+       async def on_submit(self, interaction: discord.Interaction):
         try:
             old_name = self.target_user.display_name
             new_name = self.new_name.value
 
+            # Try changing nickname
             await self.target_user.edit(nick=new_name)
             await self.message_to_delete.delete()
 
-            # Role assign
+            # Assign role if exists
             role = interaction.guild.get_role(GIVE_ROLE_ID)
             if role:
                 await self.target_user.add_roles(role)
@@ -47,7 +48,7 @@ class ChangeNameModal(Modal):
             mod_change_counts[mod_name] = mod_change_counts.get(mod_name, 0) + 1
             count = mod_change_counts[mod_name]
 
-            # Log mod change history
+            # Log mod history
             log_entry = {
                 "user": self.target_user,
                 "old": old_name,
@@ -56,7 +57,7 @@ class ChangeNameModal(Modal):
             }
             mod_history.setdefault(mod_id, []).append(log_entry)
 
-            # React to original image message with "D O N E ✅"
+            # React to original upload message
             uploaded_msg_id = message_map.get(self.target_user.id)
             if uploaded_msg_id:
                 try:
@@ -69,20 +70,29 @@ class ChangeNameModal(Modal):
                 except Exception as e:
                     print(f"Failed to add reactions: {e}")
 
-            # Send initial response
+            # Send initial response (must send exactly once)
             await interaction.response.send_message(
                 f"\u2705 Name changed by **{self.mod_user.mention}**\nNew name: `{new_name}`", ephemeral=False
             )
 
-            # Send follow-up message for total count
+            # Follow-up message
             await interaction.followup.send(f"\U0001f9be Total names changed by **{mod_name}**: `{count}`")
 
         except Exception as e:
-            # If interaction is already responded, use followup
-            try:
-                await interaction.followup.send(f"\u274C Error: {e}", ephemeral=True)
-            except:
-                print(f"Error in modal submit error handling: {e}")
+            # Print detailed error to console for debugging
+            print(f"Exception in ChangeNameModal.on_submit: {e}")
+
+            # If interaction not responded yet, respond with error message
+            if not interaction.response.is_done():
+                await interaction.response.send_message(
+                    f"\u274C Something went wrong: {e}\nPlease try again.", ephemeral=True
+                )
+            else:
+                # Already responded, send followup error instead
+                await interaction.followup.send(
+                    f"\u274C Something went wrong: {e}\nPlease try again.", ephemeral=True
+                )
+
 
 class ChangeNameView(View):
     def __init__(self, target_user):
