@@ -103,17 +103,21 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     if message.channel.id == UPLOAD_CHANNEL_ID and message.attachments:
-        for attachment in message.attachments:
-            if attachment.content_type and attachment.content_type.startswith("image/"):
-                embed = discord.Embed(title="📅 New Verification Request", color=discord.Color.blue())
-                embed.set_image(url=attachment.url)
-                embed.set_footer(text=f"From: {message.author} ({message.author.id})")
+    for attachment in message.attachments:
+        if attachment.content_type and attachment.content_type.startswith("image/"):
+            embed = discord.Embed(title="📅 New Verification Request", color=discord.Color.blue())
+            embed.set_image(url=attachment.url)
+            embed.set_footer(text=f"From: {message.author} ({message.author.id})")
 
-                view = ChangeNameView(target_user=message.author)
-                sent_msg = await bot.get_channel(MOD_CHANNEL_ID).send(embed=embed, view=view)
+            view = ChangeNameView(target_user=message.author)
+            sent_msg = await bot.get_channel(MOD_CHANNEL_ID).send(embed=embed, view=view)
 
-                # Store the uploaded message ID for reaction later
-                message_map[message.author.id] = message.id
+            # Store the uploaded message ID for reaction later
+            message_map[message.author.id] = message.id
+
+            # 🔔 Send confirmation reply to the user
+            await message.reply("✅ Thanks for sharing your profile pic. You will be verified in a few hours after review by our mods.")
+
 
     await bot.process_commands(message)
 
