@@ -29,7 +29,7 @@ class ChangeNameModal(Modal):
         self.new_name = TextInput(label="Enter New Nickname")
         self.add_item(self.new_name)
 
-      async def on_submit(self, interaction: discord.Interaction):
+    async def on_submit(self, interaction: discord.Interaction):
         try:
             old_name = self.target_user.display_name
             new_name = self.new_name.value
@@ -78,7 +78,11 @@ class ChangeNameModal(Modal):
             await interaction.followup.send(f"\U0001f9be Total names changed by **{mod_name}**: `{count}`")
 
         except Exception as e:
-            await interaction.response.send_message(f"\u274C Error: {e}", ephemeral=True)
+            # If interaction is already responded, use followup
+            try:
+                await interaction.followup.send(f"\u274C Error: {e}", ephemeral=True)
+            except:
+                print(f"Error in modal submit error handling: {e}")
 
 class ChangeNameView(View):
     def __init__(self, target_user):
@@ -135,11 +139,11 @@ async def his(ctx, user: discord.User = None):
         return await ctx.send(f"\u2139\ufe0f No rename history found for **{user}**.")
 
     text = f"\ud83d\udcdc Name changes by **{user}**:\n"
-    for i, entry in enumerate(history[-5:], 1):  # last 5 entries
+    for i, entry in enumerate(history[-5:], 1):  # last 5
         target = entry['user']
         text += f"{i}. `{entry['old']}` → `{entry['new']}` for **{target}** ({entry['time']})\n"
     await ctx.send(text)
 
 # Run the bot
-TOKEN = os.getenv("TOKEN")  # Set your token as environment variable
+TOKEN = os.getenv("TOKEN")  # Environment variable from Render
 bot.run(TOKEN)
