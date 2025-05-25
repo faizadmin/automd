@@ -29,18 +29,29 @@ class ChangeNameModal(Modal):
         self.new_name = TextInput(label="Enter New Nickname")
         self.add_item(self.new_name)
 
-       async def on_submit(self, interaction: discord.Interaction):
+          async def on_submit(self, interaction: discord.Interaction):
+        old_name = self.target_user.display_name
+        new_name = self.new_name.value
+
         try:
-            old_name = self.target_user.display_name
-            new_name = self.new_name.value
-
+            # Change nickname
             await self.target_user.edit(nick=new_name)
-            await self.message_to_delete.delete()
 
+            # Delete the mod's action message
+            try:
+                await self.message_to_delete.delete()
+            except Exception as e:
+                print(f"[Warning] Couldn't delete message: {e}")
+
+            # Add role
             role = interaction.guild.get_role(GIVE_ROLE_ID)
             if role:
-                await self.target_user.add_roles(role)
+                try:
+                    await self.target_user.add_roles(role)
+                except Exception as e:
+                    print(f"[Warning] Couldn't assign role: {e}")
 
+            # Count and log
             mod_name = str(self.mod_user)
             mod_id = self.mod_user.id
             mod_change_counts[mod_name] = mod_change_counts.get(mod_name, 0) + 1
@@ -54,34 +65,38 @@ class ChangeNameModal(Modal):
             }
             mod_history.setdefault(mod_id, []).append(log_entry)
 
+            # Add reactions to image upload message
             uploaded_msg_id = message_map.get(self.target_user.id)
             if uploaded_msg_id:
                 try:
-                    uploaded_msg = await interaction.guild.get_channel(UPLOAD_CHANNEL_ID).fetch_message(uploaded_msg_id)
-                    await uploaded_msg.add_reaction("✅")
+                    upload_channel = interaction.guild.get_channel(UPLOAD_CHANNEL_ID)
+                    uploaded_msg = await upload_channel.fetch_message(uploaded_msg_id)
+                    for emoji in ["🇩", "🇴", "🇳", "🇪", "✅"]:
+                        await uploaded_msg.add_reaction(emoji)
                 except Exception as e:
                     print(f"[Reaction Error] {e}")
 
-            if not interaction.response.is_done():
-                await interaction.response.send_message(
-                    f"✅ Nickname changed from `{old_name}` to `{new_name}` by {self.mod_user.mention}",
-                    ephemeral=False
-                )
+            # Respond success
+            await interaction.response.send_message(
+                f"✅ Name changed from `{old_name}` to `{new_name}` by {self.mod_user.mention}",
+                ephemeral=False
+            )
 
-            # Send total change count
+            # Follow up with count
             await interaction.followup.send(
-                f"🧮 Total names changed by **{mod_name}**: `{count}`", ephemeral=False
+                f"📊 Total names changed by **{mod_name}**: `{count}`", ephemeral=False
             )
 
         except Exception as e:
-            print(f"[Submit Error] {e}")
+            print(f"[FATAL ERROR] {e}")
             try:
                 if not interaction.response.is_done():
-                    await interaction.response.send_message(f"❌ Error: {e}", ephemeral=True)
+                    await interaction.response.send_message(f"❌ Error occurred: {e}", ephemeral=True)
                 else:
-                    await interaction.followup.send(f"❌ Error: {e}", ephemeral=True)
-            except Exception as inner:
-                print(f"[Followup Send Failed] {inner}")
+                    await interaction.followup.send(f"❌ Error occurred: {e}", ephemeral=True)
+            except:
+                pass
+
 
 class ChangeNameView(View):
     def __init__(self, target_user):
