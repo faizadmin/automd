@@ -208,6 +208,11 @@ async def on_message(message):
             if attachment.content_type and attachment.content_type.startswith("image/"):
                 embed = discord.Embed(title="📅 New Verification Request", color=discord.Color.blue())
                 embed.set_image(url=attachment.url)
+                embed.description = (
+                    f"👤 User: {message.author.mention}\n"
+                    f"🆔 ID: `{message.author.id}`\n\n"
+                    f"Please review the verification request below."
+                )
                 embed.set_footer(text=f"From: {message.author} ({message.author.id})")
 
                 view = ChangeNameView(target_user=message.author)
@@ -215,6 +220,7 @@ async def on_message(message):
 
                 message_map[message.author.id] = message.id
     await bot.process_commands(message)
+
 
 # Command: 22top
 @bot.command()
