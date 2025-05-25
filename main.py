@@ -122,7 +122,7 @@ class CancelReasonModal(Modal):
             ephemeral=True
         )
 
-# View to Confirm Cancellation
+# View to Confirm Cancellation (UPDATED as requested)
 class CancelConfirmView(View):
     def __init__(self, target_user, message_to_delete, mod_user, reason):
         super().__init__(timeout=60)
@@ -134,6 +134,8 @@ class CancelConfirmView(View):
     @discord.ui.button(label="✅ Yes, Cancel", style=discord.ButtonStyle.danger)
     async def confirm(self, interaction: discord.Interaction, button: Button):
         await self.message_to_delete.delete()
+        await interaction.response.send_message("✅ Cancelled successfully.", ephemeral=True)
+
         upload_message_id = message_map.get(self.target_user.id)
         photo_url = None
 
@@ -165,12 +167,9 @@ class CancelConfirmView(View):
         if photo_url:
             embed.set_image(url=photo_url)
 
-        # Send embed to MOD_ACTIVITY_CHANNEL_ID (new channel)
         mod_activity_channel = interaction.guild.get_channel(MOD_ACTIVITY_CHANNEL_ID)
         if mod_activity_channel:
             await mod_activity_channel.send(embed=embed)
-
-        await interaction.response.send_message("✅ Cancelled successfully.", ephemeral=True)
 
     @discord.ui.button(label="❌ No", style=discord.ButtonStyle.secondary)
     async def cancel(self, interaction: discord.Interaction, button: Button):
