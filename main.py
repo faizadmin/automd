@@ -74,7 +74,7 @@ class ChangeNameModal(Modal):
                 if upload_channel.permissions_for(interaction.guild.me).add_reactions:
                     try:
                         original_msg = await upload_channel.fetch_message(upload_message_id)
-                        for ch in ["D", "O", "N","E", "✅"]:
+                        for ch in ["🇩", "🇴", "🇳", "🇪", "✅"]:
                             await original_msg.add_reaction(ch)
                     except Exception as e:
                         print(f"Failed to add reactions: {e}")
@@ -102,32 +102,20 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
-    # Ignore bot messages to prevent loops
-    if message.author.bot:
-        return
-
     if message.channel.id == UPLOAD_CHANNEL_ID and message.attachments:
         for attachment in message.attachments:
             if attachment.content_type and attachment.content_type.startswith("image/"):
-                try:
-                    embed = discord.Embed(title="📅 New Verification Request", color=discord.Color.blue())
-                    embed.set_image(url=attachment.url)
-                    embed.set_footer(text=f"From: {message.author} ({message.author.id})")
+                embed = discord.Embed(title="📅 New Verification Request", color=discord.Color.blue())
+                embed.set_image(url=attachment.url)
+                embed.set_footer(text=f"From: {message.author} ({message.author.id})")
 
-                    view = ChangeNameView(target_user=message.author)
-                    sent_msg = await bot.get_channel(MOD_CHANNEL_ID).send(embed=embed, view=view)
+                view = ChangeNameView(target_user=message.author)
+                sent_msg = await bot.get_channel(MOD_CHANNEL_ID).send(embed=embed, view=view)
 
-                    # Store the uploaded message ID for reaction later
-                    message_map[message.author.id] = message.id
-
-                    # ✅ Send confirmation reply to user
-                    await message.reply("✅ Thanks for sharing your profile pic. You will be verified in a few hours after review by our mods.")
-
-                except Exception as e:
-                    print(f"Error processing uploaded image: {e}")
+                # Store the uploaded message ID for reaction later
+                message_map[message.author.id] = message.id
 
     await bot.process_commands(message)
-
 
 # Command: 22top — show top nickname changers
 @bot.command()
