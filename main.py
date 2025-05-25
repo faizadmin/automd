@@ -105,21 +105,27 @@ async def on_message(message):
     if message.channel.id == UPLOAD_CHANNEL_ID and message.attachments:
         for attachment in message.attachments:
             if attachment.content_type and attachment.content_type.startswith("image/"):
-               embed = discord.Embed(
-    title="📅 New Verification Request",
-    description=f"👤 User: {message.author.mention}\n🆔 ID: `{message.author.id}`",
-    color=discord.Color.blue()
-)
-embed.set_image(url=attachment.url)
+                try:
+                    embed = discord.Embed(
+                        title="📅 New Verification Request",
+                        description=(
+                            f"👤 User: {message.author.mention}\n"
+                            f"🆔 ID: `{message.author.id}`"
+                        ),
+                        color=discord.Color.blue()
+                    )
+                    embed.set_image(url=attachment.url)
 
+                    view = ChangeNameView(target_user=message.author)
+                    sent_msg = await bot.get_channel(MOD_CHANNEL_ID).send(embed=embed, view=view)
 
-                view = ChangeNameView(target_user=message.author)
-                sent_msg = await bot.get_channel(MOD_CHANNEL_ID).send(embed=embed, view=view)
+                    # Save uploaded message ID for later reaction
+                    message_map[message.author.id] = message.id
 
-                # Store the uploaded message ID for reaction later
-                message_map[message.author.id] = message.id
-
+                except Exception as e:
+                    print(f"❌ Error while sending mod embed: {e}")
     await bot.process_commands(message)
+
 
 # Command: 22top — show top nickname changers
 @bot.command()
