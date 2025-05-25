@@ -56,7 +56,7 @@ class ChangeNameModal(Modal):
             }
             mod_history.setdefault(mod_id, []).append(log_entry)
 
-            # React to original image message with "✅" and send "✅ Done"
+            # React to original image message with "D O N E ✅"
             uploaded_msg_id = message_map.get(self.target_user.id)
             if uploaded_msg_id:
                 try:
@@ -69,11 +69,13 @@ class ChangeNameModal(Modal):
                 except:
                     pass
 
-        await interaction.response.send_message(
-    f"\u2705 Name changed by **{self.mod_user.mention}**\nNew name: `{new_name}`", ephemeral=False
-)
-await interaction.followup.send(f"\U0001f9be Total names changed by **{mod_name}**: `{count}`")
+            await interaction.response.send_message(
+                f"\u2705 Name changed by **{self.mod_user.mention}**\nNew name: `{new_name}`", ephemeral=False
+            )
+            await interaction.followup.send(f"\U0001f9be Total names changed by **{mod_name}**: `{count}`")
 
+        except Exception as e:
+            await interaction.response.send_message(f"\u274C Error: {e}", ephemeral=True)
 
 class ChangeNameView(View):
     def __init__(self, target_user):
@@ -106,7 +108,7 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-# \u2705 Command: 22top — show top nickname changers
+# Command: 22top — show top nickname changers
 @bot.command()
 async def top(ctx):
     if not mod_change_counts:
@@ -117,7 +119,7 @@ async def top(ctx):
         text += f"{idx}. **{mod}** — `{count}` names changed\n"
     await ctx.send(text)
 
-# \u2705 Command: 22his @mod — show who that mod has renamed
+# Command: 22his @mod — show who that mod has renamed
 @bot.command()
 async def his(ctx, user: discord.User = None):
     if not user:
@@ -130,11 +132,11 @@ async def his(ctx, user: discord.User = None):
         return await ctx.send(f"\u2139\ufe0f No rename history found for **{user}**.")
 
     text = f"\ud83d\udcdc Name changes by **{user}**:\n"
-    for i, entry in enumerate(history[-5:], 1):  # last 5
+    for i, entry in enumerate(history[-5:], 1):  # last 5 entries
         target = entry['user']
         text += f"{i}. `{entry['old']}` → `{entry['new']}` for **{target}** ({entry['time']})\n"
     await ctx.send(text)
 
-# 🔻 Run the bot
-TOKEN = os.getenv("TOKEN")  # Environment variable from Render
+# Run the bot
+TOKEN = os.getenv("TOKEN")  # Set your token as environment variable
 bot.run(TOKEN)
