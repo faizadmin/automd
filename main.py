@@ -29,7 +29,7 @@ class ChangeNameModal(Modal):
         self.new_name = TextInput(label="Enter New Nickname")
         self.add_item(self.new_name)
 
-    async def on_submit(self, interaction: discord.Interaction):
+       async def on_submit(self, interaction: discord.Interaction):
         try:
             old_name = self.target_user.display_name
             new_name = self.new_name.value
@@ -58,28 +58,30 @@ class ChangeNameModal(Modal):
             if uploaded_msg_id:
                 try:
                     uploaded_msg = await interaction.guild.get_channel(UPLOAD_CHANNEL_ID).fetch_message(uploaded_msg_id)
-                    await uploaded_msg.add_reaction("🇩")
-                    await uploaded_msg.add_reaction("🇴")
-                    await uploaded_msg.add_reaction("🇳")
-                    await uploaded_msg.add_reaction("🇪")
                     await uploaded_msg.add_reaction("✅")
                 except Exception as e:
-                    print(f"Reaction error: {e}")
+                    print(f"[Reaction Error] {e}")
 
-            await interaction.response.send_message(
-                f"✅ Name changed by {self.mod_user.mention}\nNew name: `{new_name}`", ephemeral=False
-            )
+            if not interaction.response.is_done():
+                await interaction.response.send_message(
+                    f"✅ Nickname changed from `{old_name}` to `{new_name}` by {self.mod_user.mention}",
+                    ephemeral=False
+                )
 
+            # Send total change count
             await interaction.followup.send(
-                f"🦾 Total names changed by **{mod_name}**: `{count}`"
+                f"🧮 Total names changed by **{mod_name}**: `{count}`", ephemeral=False
             )
 
         except Exception as e:
-            print(f"[ERROR] Modal submission failed: {e}")
-            if not interaction.response.is_done():
-                await interaction.response.send_message(f"❌ Something went wrong: {e}", ephemeral=True)
-            else:
-                await interaction.followup.send(f"❌ Something went wrong: {e}", ephemeral=True)
+            print(f"[Submit Error] {e}")
+            try:
+                if not interaction.response.is_done():
+                    await interaction.response.send_message(f"❌ Error: {e}", ephemeral=True)
+                else:
+                    await interaction.followup.send(f"❌ Error: {e}", ephemeral=True)
+            except Exception as inner:
+                print(f"[Followup Send Failed] {inner}")
 
 class ChangeNameView(View):
     def __init__(self, target_user):
