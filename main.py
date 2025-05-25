@@ -120,10 +120,16 @@ class CancelConfirmView(View):
             try:
                 upload_channel = interaction.guild.get_channel(UPLOAD_CHANNEL_ID)
                 original_msg = await upload_channel.fetch_message(upload_message_id)
+
+                # Add reactions: C A N C E L ❌
+                cancel_reacts = ["🇨", "🇦", "🇳", "🇨", "🇪", "🇱", "❌"]
+                for emoji in cancel_reacts:
+                    await original_msg.add_reaction(emoji)
+
                 if original_msg.attachments:
                     photo_url = original_msg.attachments[0].url
-            except:
-                pass
+            except Exception as e:
+                print(f"Failed to react to original message: {e}")
 
         embed = discord.Embed(
             title="❌ Verification Request Cancelled",
@@ -176,14 +182,7 @@ async def on_message(message):
     if message.channel.id == UPLOAD_CHANNEL_ID and message.attachments:
         for attachment in message.attachments:
             if attachment.content_type and attachment.content_type.startswith("image/"):
-                embed = discord.Embed(
-                    title="📅 New Verification Request",
-                    color=discord.Color.blue(),
-                    description=(
-                        f"👤 User: {message.author.mention}\n"
-                        f"🆔 ID: `{message.author.id}`"
-                    )
-                )
+                embed = discord.Embed(title="📅 New Verification Request", color=discord.Color.blue())
                 embed.set_image(url=attachment.url)
                 embed.set_footer(text=f"From: {message.author} ({message.author.id})")
 
@@ -192,7 +191,6 @@ async def on_message(message):
 
                 message_map[message.author.id] = message.id
     await bot.process_commands(message)
-
 
 # Command: 22top
 @bot.command()
@@ -210,13 +208,10 @@ async def top(ctx):
 async def his(ctx, user: discord.User = None):
     if not user:
         return await ctx.send("❌ Please mention a moderator or provide user ID.")
-
     mod_id = user.id
     history = mod_history.get(mod_id)
-
     if not history:
         return await ctx.send(f"ℹ️ No rename history found for **{user}**.")
-
     text = f"📜 Name changes by **{user}**:\n"
     for i, entry in enumerate(history[-5:], 1):
         target = entry['user']
