@@ -123,7 +123,7 @@ async def top(ctx):
     if not mod_change_counts:
         return await ctx.send("❌ No nickname changes yet.")
     sorted_mods = sorted(mod_change_counts.items(), key=lambda x: x[1], reverse=True)
-    text = "**🎖 Top Name Changers:**\n"
+    text = "**🎖 Top Mods:**\n"
     for idx, (mod, count) in enumerate(sorted_mods, 1):
         text += f"{idx}. **{mod}** — `{count}` names changed\n"
     await ctx.send(text)
