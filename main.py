@@ -120,7 +120,7 @@ async def on_message(message):
                 await message.reply("📩 **Thanks for sharing image!**\nYou will be verified in few hours after our channel moderator review.")
             except Exception as e:
                 print(f"Failed to reply to image message: {e}")
-
+ await bot.process_commands(message)
 
 # Command: 22top — show top nickname changers
 @bot.command()
