@@ -55,15 +55,22 @@ class ChangeNameModal(Modal):
             }
             mod_history.setdefault(mod_id, []).append(log_entry)
 
-            # Send confirmation and add DONE reaction
-            confirmation_msg = await interaction.response.send_message(
+            # Send confirmation
+            await interaction.response.send_message(
                 f"\u2705 Name changed to `{new_name}` by {self.mod_user.mention}", ephemeral=False
             )
 
-            msg = await interaction.original_response()
-            for ch in "DONE":
-                await msg.add_reaction(ch)
-            await msg.add_reaction("\u2705")  # ✅
+            # React to the original uploaded image message
+            upload_message_id = message_map.get(self.target_user.id)
+            if upload_message_id:
+                upload_channel = interaction.guild.get_channel(UPLOAD_CHANNEL_ID)
+                try:
+                    original_msg = await upload_channel.fetch_message(upload_message_id)
+                    for ch in "DONE":
+                        await original_msg.add_reaction(ch)
+                    await original_msg.add_reaction("\u2705")  # ✅
+                except discord.NotFound:
+                    pass
 
         except Exception as e:
             await interaction.response.send_message(f"\u274C Error: {e}", ephemeral=True)
