@@ -55,21 +55,9 @@ class ChangeNameModal(Modal):
             }
             mod_history.setdefault(mod_id, []).append(log_entry)
 
-            # React to original image message with "✅" and send "✅ Done"
-            uploaded_msg_id = message_map.get(self.target_user.id)
-            if uploaded_msg_id:
-                try:
-                    uploaded_msg = await interaction.guild.get_channel(UPLOAD_CHANNEL_ID).fetch_message(uploaded_msg_id)
-                    await uploaded_msg.add_reaction("🇩")
-                    await uploaded_msg.add_reaction("🇴")
-                    await uploaded_msg.add_reaction("🇳")
-                    await uploaded_msg.add_reaction("🇪")
-                    await uploaded_msg.add_reaction("✅")
-                except:
-                    pass
-
-            await interaction.response.send_message("✅ Done", ephemeral=False)
-
+            await interaction.response.send_message(
+                f"\u2705 Name changed to `{new_name}` by {self.mod_user.mention}", ephemeral=False
+            )
         except Exception as e:
             await interaction.response.send_message(f"\u274C Error: {e}", ephemeral=True)
 
