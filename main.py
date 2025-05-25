@@ -156,7 +156,10 @@ class CancelConfirmView(View):
         if photo_url:
             embed.set_image(url=photo_url)
 
-        await interaction.guild.get_channel(MOD_CHANNEL_ID).send(embed=embed)
+       mod_activity_channel = interaction.guild.get_channel(MOD_ACTIVITY_CHANNEL_ID)
+if mod_activity_channel:
+    await mod_activity_channel.send(embed=embed)
+
 
     @discord.ui.button(label="❌ No", style=discord.ButtonStyle.secondary)
     async def cancel(self, interaction: discord.Interaction, button: Button):
