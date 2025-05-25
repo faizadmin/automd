@@ -144,10 +144,10 @@ class CancelConfirmView(View):
                 upload_channel = interaction.guild.get_channel(UPLOAD_CHANNEL_ID)
                 original_msg = await upload_channel.fetch_message(upload_message_id)
 
-                # Add reactions: D E C L I N E ❌
-                decline_reacts = ["🇩", "🇪", "🇨", "🇱", "🇮", "🇳", "🇪", "❌"]
+                # Add reactions: D E  N Y ❌
+                deny_reacts = ["🇩", "🇪", "🇳", "Y", "❌"]
 
-                for emoji in decline_reacts:
+                for emoji in deny_reacts:
                     await original_msg.add_reaction(emoji)
 
                 if original_msg.attachments:
