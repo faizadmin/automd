@@ -74,7 +74,7 @@ class ChangeNameModal(Modal):
                 if upload_channel.permissions_for(interaction.guild.me).add_reactions:
                     try:
                         original_msg = await upload_channel.fetch_message(upload_message_id)
-                        for ch in ["V", "E", "R", "I", "F", "I","E", "D", "✅"]:
+                        for ch in ["D", "O", "N","E", "✅"]:
                             await original_msg.add_reaction(ch)
                     except Exception as e:
                         print(f"Failed to add reactions: {e}")
