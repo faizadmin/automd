@@ -29,7 +29,7 @@ class ChangeNameModal(Modal):
         self.new_name = TextInput(label="Enter New Nickname")
         self.add_item(self.new_name)
 
-    async def on_submit(self, interaction: discord.Interaction):
+      async def on_submit(self, interaction: discord.Interaction):
         try:
             old_name = self.target_user.display_name
             new_name = self.new_name.value
@@ -66,12 +66,15 @@ class ChangeNameModal(Modal):
                     await uploaded_msg.add_reaction("🇳")
                     await uploaded_msg.add_reaction("🇪")
                     await uploaded_msg.add_reaction("✅")
-                except:
-                    pass
+                except Exception as e:
+                    print(f"Failed to add reactions: {e}")
 
+            # Send initial response
             await interaction.response.send_message(
                 f"\u2705 Name changed by **{self.mod_user.mention}**\nNew name: `{new_name}`", ephemeral=False
             )
+
+            # Send follow-up message for total count
             await interaction.followup.send(f"\U0001f9be Total names changed by **{mod_name}**: `{count}`")
 
         except Exception as e:
