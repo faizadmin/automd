@@ -69,14 +69,11 @@ class ChangeNameModal(Modal):
                 except:
                     pass
 
-          await interaction.response.send_message(
+        await interaction.response.send_message(
     f"\u2705 Name changed by **{self.mod_user.mention}**\nNew name: `{new_name}`", ephemeral=False
 )
 await interaction.followup.send(f"\U0001f9be Total names changed by **{mod_name}**: `{count}`")
 
-            await interaction.channel.send(f"\U0001f9be Total names changed by **{mod_name}**: `{count}`")
-        except Exception as e:
-            await interaction.response.send_message(f"\u274C Error: {e}", ephemeral=True)
 
 class ChangeNameView(View):
     def __init__(self, target_user):
