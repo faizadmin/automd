@@ -29,16 +29,14 @@ class ChangeNameModal(Modal):
         self.new_name = TextInput(label="Enter New Nickname")
         self.add_item(self.new_name)
 
-       async def on_submit(self, interaction: discord.Interaction):
+    async def on_submit(self, interaction: discord.Interaction):
         try:
             old_name = self.target_user.display_name
             new_name = self.new_name.value
 
-            # Try changing nickname
             await self.target_user.edit(nick=new_name)
             await self.message_to_delete.delete()
 
-            # Assign role if exists
             role = interaction.guild.get_role(GIVE_ROLE_ID)
             if role:
                 await self.target_user.add_roles(role)
@@ -48,7 +46,6 @@ class ChangeNameModal(Modal):
             mod_change_counts[mod_name] = mod_change_counts.get(mod_name, 0) + 1
             count = mod_change_counts[mod_name]
 
-            # Log mod history
             log_entry = {
                 "user": self.target_user,
                 "old": old_name,
@@ -57,7 +54,6 @@ class ChangeNameModal(Modal):
             }
             mod_history.setdefault(mod_id, []).append(log_entry)
 
-            # React to original upload message
             uploaded_msg_id = message_map.get(self.target_user.id)
             if uploaded_msg_id:
                 try:
@@ -68,31 +64,22 @@ class ChangeNameModal(Modal):
                     await uploaded_msg.add_reaction("🇪")
                     await uploaded_msg.add_reaction("✅")
                 except Exception as e:
-                    print(f"Failed to add reactions: {e}")
+                    print(f"Reaction error: {e}")
 
-            # Send initial response (must send exactly once)
             await interaction.response.send_message(
-                f"\u2705 Name changed by **{self.mod_user.mention}**\nNew name: `{new_name}`", ephemeral=False
+                f"✅ Name changed by {self.mod_user.mention}\nNew name: `{new_name}`", ephemeral=False
             )
 
-            # Follow-up message
-            await interaction.followup.send(f"\U0001f9be Total names changed by **{mod_name}**: `{count}`")
+            await interaction.followup.send(
+                f"🦾 Total names changed by **{mod_name}**: `{count}`"
+            )
 
         except Exception as e:
-            # Print detailed error to console for debugging
-            print(f"Exception in ChangeNameModal.on_submit: {e}")
-
-            # If interaction not responded yet, respond with error message
+            print(f"[ERROR] Modal submission failed: {e}")
             if not interaction.response.is_done():
-                await interaction.response.send_message(
-                    f"\u274C Something went wrong: {e}\nPlease try again.", ephemeral=True
-                )
+                await interaction.response.send_message(f"❌ Something went wrong: {e}", ephemeral=True)
             else:
-                # Already responded, send followup error instead
-                await interaction.followup.send(
-                    f"\u274C Something went wrong: {e}\nPlease try again.", ephemeral=True
-                )
-
+                await interaction.followup.send(f"❌ Something went wrong: {e}", ephemeral=True)
 
 class ChangeNameView(View):
     def __init__(self, target_user):
@@ -102,20 +89,21 @@ class ChangeNameView(View):
     @discord.ui.button(label="Change Name", style=discord.ButtonStyle.primary)
     async def change_name(self, interaction: discord.Interaction, button: Button):
         if not interaction.user.guild_permissions.manage_nicknames:
-            return await interaction.response.send_message("\ud83d\udeab You don't have permission to change names.", ephemeral=True)
+            return await interaction.response.send_message("🚫 You don't have permission to change names.", ephemeral=True)
+
         modal = ChangeNameModal(target_user=self.target_user, message_to_delete=interaction.message, mod_user=interaction.user)
         await interaction.response.send_modal(modal)
 
 @bot.event
 async def on_ready():
-    print(f"\u2705 Logged in as {bot.user}!")
+    print(f"✅ Bot is online as {bot.user}!")
 
 @bot.event
 async def on_message(message):
     if message.channel.id == UPLOAD_CHANNEL_ID and message.attachments:
         for attachment in message.attachments:
             if attachment.content_type and attachment.content_type.startswith("image/"):
-                embed = discord.Embed(title="\ud83d\udcc5 New Verification Request", color=discord.Color.blue())
+                embed = discord.Embed(title="📅 New Verification Request", color=discord.Color.blue())
                 embed.set_image(url=attachment.url)
                 embed.set_footer(text=f"From: {message.author} ({message.author.id})")
 
@@ -125,35 +113,33 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-# Command: 22top — show top nickname changers
 @bot.command()
 async def top(ctx):
     if not mod_change_counts:
-        return await ctx.send("\u274C No nickname changes yet.")
+        return await ctx.send("❌ No nickname changes yet.")
     sorted_mods = sorted(mod_change_counts.items(), key=lambda x: x[1], reverse=True)
-    text = "**\ud83c\udfc6 Top Name Changers:**\n"
+    text = "**🏆 Top Name Changers:**\n"
     for idx, (mod, count) in enumerate(sorted_mods, 1):
         text += f"{idx}. **{mod}** — `{count}` names changed\n"
     await ctx.send(text)
 
-# Command: 22his @mod — show who that mod has renamed
 @bot.command()
 async def his(ctx, user: discord.User = None):
     if not user:
-        return await ctx.send("\u274C Please mention a moderator or give user ID.")
+        return await ctx.send("❌ Please mention a moderator or give user ID.")
 
     mod_id = user.id
     history = mod_history.get(mod_id)
 
     if not history:
-        return await ctx.send(f"\u2139\ufe0f No rename history found for **{user}**.")
+        return await ctx.send(f"ℹ️ No rename history found for **{user}**.")
 
-    text = f"\ud83d\udcdc Name changes by **{user}**:\n"
-    for i, entry in enumerate(history[-5:], 1):  # last 5
+    text = f"📜 Name changes by **{user}**:\n"
+    for i, entry in enumerate(history[-5:], 1):
         target = entry['user']
         text += f"{i}. `{entry['old']}` → `{entry['new']}` for **{target}** ({entry['time']})\n"
     await ctx.send(text)
 
-# Run the bot
-TOKEN = os.getenv("TOKEN")  # Environment variable from Render
+# Run bot
+TOKEN = os.getenv("TOKEN")
 bot.run(TOKEN)
