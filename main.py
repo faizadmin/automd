@@ -13,9 +13,8 @@ bot = commands.Bot(command_prefix="22", intents=intents)
 # Replace with your actual values
 GUILD_ID = 856739130850541618
 UPLOAD_CHANNEL_ID = 982222931893583892
-MOD_CHANNEL_ID = 1376090022788333670
-MOD_ACTIVITY_CHANNEL_ID = 1376231467922755685  # Yahan apne mod activity text channel ka ID daalo
-
+MOD_CHANNEL_ID = 1376090022788333670  # old mod channel (used only for new requests)
+MOD_ACTIVITY_CHANNEL_ID = 1376231467922755685  # NEW mod activity channel for success/fail messages
 GIVE_ROLE_ID = 955703181738901534
 
 mod_change_counts = {}
@@ -56,6 +55,7 @@ class ChangeNameModal(Modal):
             }
             mod_history.setdefault(mod_id, []).append(log_entry)
 
+            # Send confirmation message to interaction
             await interaction.response.send_message(
                 f"✅ UserID: `{self.target_user.id}`\n"
                 f"Old Name: `{old_name}`\n"
@@ -65,6 +65,7 @@ class ChangeNameModal(Modal):
                 ephemeral=False
             )
 
+            # Add reactions to original upload message
             upload_message_id = message_map.get(self.target_user.id)
             if upload_message_id:
                 upload_channel = interaction.guild.get_channel(UPLOAD_CHANNEL_ID)
@@ -78,9 +79,22 @@ class ChangeNameModal(Modal):
                 else:
                     print("Bot missing Add Reactions permission in upload channel")
 
-            # Optional: Remove from message_map after processing
-            if self.target_user.id in message_map:
-                del message_map[self.target_user.id]
+            # Send embed message to MOD_ACTIVITY_CHANNEL_ID (new channel)
+            embed = discord.Embed(
+                title="✅ Verification Successful",
+                color=discord.Color.green(),
+                description=(
+                    f"👤 User: {self.target_user.mention}\n"
+                    f"🆔 ID: `{self.target_user.id}`\n\n"
+                    f"📝 **Old Nickname:** `{old_name}`\n"
+                    f"📝 **New Nickname:** `{new_name}`\n"
+                    f"👮 Verified by: {self.mod_user.mention} (`{self.mod_user.id}`)\n"
+                    f"⏰ Time: {discord.utils.format_dt(discord.utils.utcnow(), style='F')}"
+                )
+            )
+            mod_activity_channel = interaction.guild.get_channel(MOD_ACTIVITY_CHANNEL_ID)
+            if mod_activity_channel:
+                await mod_activity_channel.send(embed=embed)
 
         except Exception as e:
             await interaction.response.send_message(f"❌ Error: {e}", ephemeral=True)
@@ -123,9 +137,6 @@ class CancelConfirmView(View):
         upload_message_id = message_map.get(self.target_user.id)
         photo_url = None
 
-        # Send ephemeral success message first
-        await interaction.response.send_message("✅ Cancelled successfully.", ephemeral=True)
-
         if upload_message_id:
             try:
                 upload_channel = interaction.guild.get_channel(UPLOAD_CHANNEL_ID)
@@ -141,10 +152,6 @@ class CancelConfirmView(View):
             except Exception as e:
                 print(f"Failed to react to original message: {e}")
 
-        # Remove from message_map after processing
-        if self.target_user.id in message_map:
-            del message_map[self.target_user.id]
-
         embed = discord.Embed(
             title="❌ Verification Request Cancelled",
             color=discord.Color.red(),
@@ -158,10 +165,12 @@ class CancelConfirmView(View):
         if photo_url:
             embed.set_image(url=photo_url)
 
-       mod_activity_channel = interaction.guild.get_channel(MOD_ACTIVITY_CHANNEL_ID)
-if mod_activity_channel:
-    await mod_activity_channel.send(embed=embed)
+        # Send embed to MOD_ACTIVITY_CHANNEL_ID (new channel)
+        mod_activity_channel = interaction.guild.get_channel(MOD_ACTIVITY_CHANNEL_ID)
+        if mod_activity_channel:
+            await mod_activity_channel.send(embed=embed)
 
+        await interaction.response.send_message("✅ Cancelled successfully.", ephemeral=True)
 
     @discord.ui.button(label="❌ No", style=discord.ButtonStyle.secondary)
     async def cancel(self, interaction: discord.Interaction, button: Button):
@@ -235,5 +244,5 @@ async def his(ctx, user: discord.User = None):
     await ctx.send(text)
 
 # Run the bot
-TOKEN = os.getenv("TOKEN")  # Put your bot token in environment variable for safety
+TOKEN = os.getenv("TOKEN")
 bot.run(TOKEN)
