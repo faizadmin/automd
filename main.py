@@ -75,6 +75,11 @@ class ChangeNameModal(Modal):
                         print(f"Failed to add reactions: {e}")
                 else:
                     print("Bot missing Add Reactions permission in upload channel")
+
+            # Optional: Remove from message_map after processing
+            if self.target_user.id in message_map:
+                del message_map[self.target_user.id]
+
         except Exception as e:
             await interaction.response.send_message(f"❌ Error: {e}", ephemeral=True)
 
@@ -116,6 +121,9 @@ class CancelConfirmView(View):
         upload_message_id = message_map.get(self.target_user.id)
         photo_url = None
 
+        # Send ephemeral success message first
+        await interaction.response.send_message("✅ Cancelled successfully.", ephemeral=True)
+
         if upload_message_id:
             try:
                 upload_channel = interaction.guild.get_channel(UPLOAD_CHANNEL_ID)
@@ -131,6 +139,10 @@ class CancelConfirmView(View):
             except Exception as e:
                 print(f"Failed to react to original message: {e}")
 
+        # Remove from message_map after processing
+        if self.target_user.id in message_map:
+            del message_map[self.target_user.id]
+
         embed = discord.Embed(
             title="❌ Verification Request Cancelled",
             color=discord.Color.red(),
@@ -145,7 +157,6 @@ class CancelConfirmView(View):
             embed.set_image(url=photo_url)
 
         await interaction.guild.get_channel(MOD_CHANNEL_ID).send(embed=embed)
-        await interaction.response.send_message("✅ Cancelled successfully.", ephemeral=True)
 
     @discord.ui.button(label="❌ No", style=discord.ButtonStyle.secondary)
     async def cancel(self, interaction: discord.Interaction, button: Button):
@@ -219,5 +230,5 @@ async def his(ctx, user: discord.User = None):
     await ctx.send(text)
 
 # Run the bot
-TOKEN = os.getenv("TOKEN")
+TOKEN = os.getenv("DISCORD_TOKEN")  # Put your bot token in environment variable for safety
 bot.run(TOKEN)
