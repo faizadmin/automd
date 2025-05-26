@@ -233,6 +233,11 @@ async def on_message(message):
     await bot.process_commands(message)
 
 @bot.command()
+async def ver(ctx):
+    await ctx.send("**This software version is 1.1**")
+
+
+@bot.command()
 async def top(ctx):
     if not ctx.author.guild_permissions.manage_nicknames:
         return await ctx.send("🚫 You don't have permission.")
