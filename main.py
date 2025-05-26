@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord.ui import View, Button, Modal, TextInput
 import os
+import json
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -19,7 +20,28 @@ GIVE_ROLE_ID = 955703181738901534
 
 mod_change_counts = {}
 mod_history = {}
-message_map = {}  # user_id : uploaded_message_id
+message_map = {}
+
+DATA_FILE = "data.json"
+
+def save_data():
+    data = {
+        "mod_change_counts": mod_change_counts,
+        "mod_history": {str(k): v for k, v in mod_history.items()},
+        "message_map": {str(k): v for k, v in message_map.items()},
+    }
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+
+def load_data():
+    global mod_change_counts, mod_history, message_map
+    if os.path.isfile(DATA_FILE):
+        with open(DATA_FILE, "r") as f:
+            data = json.load(f)
+            mod_change_counts = data.get("mod_change_counts", {})
+            # Keys in mod_history and message_map are integers (user ids), convert keys back
+            mod_history = {int(k): v for k, v in data.get("mod_history", {}).items()}
+            message_map = {int(k): v for k, v in data.get("message_map", {}).items()}
 
 # Modal for Name Change
 class ChangeNameModal(Modal):
@@ -44,16 +66,17 @@ class ChangeNameModal(Modal):
                 await self.target_user.add_roles(role)
 
             mod_name = str(self.mod_user)
-            mod_id = self.mod_user.id
             mod_change_counts[mod_name] = mod_change_counts.get(mod_name, 0) + 1
+            save_data()  # Save here
 
             log_entry = {
-                "user": self.target_user,
+                "user": str(self.target_user),
                 "old": old_name,
                 "new": new_name,
                 "time": discord.utils.format_dt(discord.utils.utcnow(), style="R")
             }
-            mod_history.setdefault(mod_id, []).append(log_entry)
+            mod_history.setdefault(self.mod_user.id, []).append(log_entry)
+            save_data()  # Save here too
 
             # Send confirmation message to interaction
             await interaction.response.send_message(
@@ -122,7 +145,7 @@ class CancelReasonModal(Modal):
             ephemeral=True
         )
 
-# View to Confirm Cancellation (UPDATED as requested)
+# View to Confirm Cancellation
 class CancelConfirmView(View):
     def __init__(self, target_user, message_to_delete, mod_user, reason):
         super().__init__(timeout=60)
@@ -146,7 +169,6 @@ class CancelConfirmView(View):
 
                 # Add reactions: D E N Y ❌
                 deny_reacts = ["🇩", "🇪", "🇳", "🇾", "❌"]
-
 
                 for emoji in deny_reacts:
                     await original_msg.add_reaction(emoji)
@@ -200,6 +222,7 @@ class ChangeNameView(View):
 # Event: Bot Ready
 @bot.event
 async def on_ready():
+    load_data()  # Load saved data when bot starts
     print(f"✅ Logged in as {bot.user}!")
 
 # Event: On Message with Image Upload
@@ -221,8 +244,9 @@ async def on_message(message):
                 sent_msg = await bot.get_channel(MOD_CHANNEL_ID).send(embed=embed, view=view)
 
                 message_map[message.author.id] = message.id
-    await bot.process_commands(message)
+                save_data()  # Save message_map change
 
+    await bot.process_commands(message)
 
 # Command: 22top
 @bot.command()
@@ -239,7 +263,6 @@ async def top(ctx):
         text += f"{idx}. **{mod}** — `{count}` names changed\n"
     await ctx.send(text)
 
-
 # Command: 22his @mod
 @bot.command()
 async def his(ctx, user: discord.User = None):
@@ -255,11 +278,12 @@ async def his(ctx, user: discord.User = None):
         return await ctx.send(f"ℹ️ No rename history found for **{user}**.")
 
     text = f"📜 Name changes by **{user}**:\n"
-    for i, entry in enumerate(history[-5:], 1):
-        target = entry['user']
-        text += f"{i}. `{entry['old']}` → `{entry['new']}` for **{target}** ({entry['time']})\n"
+    for idx, entry in enumerate(history[-10:], 1):
+        text += f"{idx}. User: `{entry['user']}` | Old: `{entry['old']}` | New: `{entry['new']}` | Time: {entry['time']}\n"
+
     await ctx.send(text)
 
-# Run the bot
+# Run your bot with your token
 TOKEN = os.getenv("TOKEN")
 bot.run(TOKEN)
+
