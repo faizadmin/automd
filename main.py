@@ -227,23 +227,33 @@ async def on_message(message):
 # Command: 22top
 @bot.command()
 async def top(ctx):
+    if not ctx.author.guild_permissions.manage_nicknames:
+        return await ctx.send("🚫 You don't have permission to view this.")
+    
     if not mod_change_counts:
         return await ctx.send("❌ No nickname changes yet.")
+
     sorted_mods = sorted(mod_change_counts.items(), key=lambda x: x[1], reverse=True)
     text = "**🎖 Top Mods:**\n"
     for idx, (mod, count) in enumerate(sorted_mods, 1):
         text += f"{idx}. **{mod}** — `{count}` names changed\n"
     await ctx.send(text)
 
+
 # Command: 22his @mod
 @bot.command()
 async def his(ctx, user: discord.User = None):
+    if not ctx.author.guild_permissions.manage_nicknames:
+        return await ctx.send("🚫 You don't have permission to view this.")
+
     if not user:
         return await ctx.send("❌ Please mention a moderator or provide user ID.")
+
     mod_id = user.id
     history = mod_history.get(mod_id)
     if not history:
         return await ctx.send(f"ℹ️ No rename history found for **{user}**.")
+
     text = f"📜 Name changes by **{user}**:\n"
     for i, entry in enumerate(history[-5:], 1):
         target = entry['user']
