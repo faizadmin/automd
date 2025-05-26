@@ -151,7 +151,7 @@ class CancelConfirmView(View):
         self.mod_user = mod_user
         self.reason = reason
 
-    @discord.ui.button(label="✅ Yes, Cancel", style=discord.ButtonStyle.danger)
+    @discord.ui.button(label="✅ Yes, Cancel", style=discord.ButtonStyle.danger, custom_id="cancel_confirm")
     async def confirm(self, interaction: discord.Interaction, button: Button):
         await self.message_to_delete.delete()
         await interaction.response.send_message("✅ Cancelled successfully.", ephemeral=True)
@@ -185,7 +185,7 @@ class CancelConfirmView(View):
 
         await interaction.guild.get_channel(MOD_ACTIVITY_CHANNEL_ID).send(embed=embed)
 
-    @discord.ui.button(label="❌ No", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="❌ No", style=discord.ButtonStyle.secondary, custom_id="cancel_abort")
     async def cancel(self, interaction: discord.Interaction, button: Button):
         await interaction.response.send_message("❎ Cancel action aborted.", ephemeral=True)
 
@@ -194,14 +194,14 @@ class ChangeNameView(View):
         super().__init__(timeout=None)
         self.target_user = target_user
 
-    @discord.ui.button(label="Change Name", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Change Name", style=discord.ButtonStyle.primary, custom_id="change_name_btn")
     async def change_name(self, interaction: discord.Interaction, button: Button):
         if not interaction.user.guild_permissions.manage_nicknames:
             return await interaction.response.send_message("🚫 You don't have permission.", ephemeral=True)
         modal = ChangeNameModal(self.target_user, interaction.message, interaction.user)
         await interaction.response.send_modal(modal)
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.danger)
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.danger, custom_id="cancel_verification_btn")
     async def cancel_verification(self, interaction: discord.Interaction, button: Button):
         if not interaction.user.guild_permissions.manage_nicknames:
             return await interaction.response.send_message("🚫 You don't have permission.", ephemeral=True)
@@ -258,6 +258,6 @@ async def his(ctx, user: discord.User = None):
         text += f"{i}. `{entry['old']}` → `{entry['new']}` for **{entry['user']}** ({entry['time']})\n"
     await ctx.send(text)
 
-# Run your bot with your token (set environment variable TOKEN)
+# Run your bot
 TOKEN = os.getenv("TOKEN")
 bot.run(TOKEN)
