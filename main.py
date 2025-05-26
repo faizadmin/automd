@@ -232,9 +232,6 @@ async def on_message(message):
                     save_data()
     await bot.process_commands(message)
 
-
-
-
 @bot.command()
 async def top(ctx):
     if not ctx.author.guild_permissions.manage_nicknames:
