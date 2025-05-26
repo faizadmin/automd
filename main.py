@@ -210,12 +210,12 @@ class ChangeNameView(View):
 
 @bot.event
 async def on_ready():
-    bot.add_view(ChangeNameView(None))
+    
     print(f"✅ Logged in as {bot.user}")
 
 @bot.command()
 async def ver(ctx):
-    await ctx.send("**This software version is 1.3**")
+    await ctx.send("**This software version is 1.4**")
 
 @bot.event
 async def on_message(message):
