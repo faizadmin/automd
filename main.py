@@ -3,7 +3,6 @@ from discord.ext import commands
 from discord.ui import View, Button, Modal, TextInput
 import os
 from pymongo import MongoClient
-import json
 
 # INTENTS
 intents = discord.Intents.default()
@@ -103,7 +102,7 @@ class ChangeNameModal(Modal):
                     original_msg = await upload_channel.fetch_message(upload_message_id)
                     for ch in ["🇩", "🇴", "🇳", "🇪", "✅"]:
                         await original_msg.add_reaction(ch)
-                except:
+                except Exception:
                     pass
 
             embed = discord.Embed(
@@ -168,7 +167,7 @@ class CancelConfirmView(View):
                     await original_msg.add_reaction(emoji)
                 if original_msg.attachments:
                     photo_url = original_msg.attachments[0].url
-            except:
+            except Exception:
                 pass
 
         embed = discord.Embed(
@@ -217,7 +216,7 @@ async def on_ready():
 async def on_message(message):
     if message.channel.id == UPLOAD_CHANNEL_ID and message.attachments:
         for attachment in message.attachments:
-            if attachment.content_type.startswith("image/"):
+            if attachment.content_type and attachment.content_type.startswith("image/"):
                 embed = discord.Embed(title="📅 New Verification Request", color=discord.Color.blue())
                 embed.set_image(url=attachment.url)
                 embed.description = (
@@ -226,9 +225,11 @@ async def on_message(message):
                     f"Please review the verification request below."
                 )
                 view = ChangeNameView(message.author)
-                msg = await bot.get_channel(MOD_CHANNEL_ID).send(embed=embed, view=view)
-                message_map[str(message.author.id)] = message.id
-                save_data()
+                mod_channel = bot.get_channel(MOD_CHANNEL_ID)
+                if mod_channel:
+                    msg = await mod_channel.send(embed=embed, view=view)
+                    message_map[str(message.author.id)] = message.id
+                    save_data()
     await bot.process_commands(message)
 
 @bot.command()
@@ -257,8 +258,6 @@ async def his(ctx, user: discord.User = None):
         text += f"{i}. `{entry['old']}` → `{entry['new']}` for **{entry['user']}** ({entry['time']})\n"
     await ctx.send(text)
 
-
-# Run your bot with your token
+# Run your bot with your token (set environment variable TOKEN)
 TOKEN = os.getenv("TOKEN")
 bot.run(TOKEN)
-
