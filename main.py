@@ -210,6 +210,8 @@ class ChangeNameView(View):
 
 @bot.event
 async def on_ready():
+    bot.add_view(ChangeNameView(None))
+
     print(f"✅ Logged in as {bot.user}")
 
 @bot.event
