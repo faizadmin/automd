@@ -21,7 +21,7 @@ MOD_ACTIVITY_CHANNEL_ID = 1376231467922755685
 GIVE_ROLE_ID = 955703181738901534
 
 # MONGO SETUP
-MONGO_URI = "mongodb+srv://faizadmin:Pata@1244@cluster0.v16t0ei.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+MONGO_URI = "mongodb+srv://faizadmin:Pata%401244@cluster0.v16t0ei.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 mongo_client = MongoClient(MONGO_URI)
 db = mongo_client["discord_bot"]
 config_col = db["config"]
