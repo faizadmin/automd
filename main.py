@@ -232,9 +232,7 @@ async def on_message(message):
                     save_data()
     await bot.process_commands(message)
 
-@bot.command()
-async def ver(ctx):
-    await ctx.send("**This software version is 1.2**")
+
 
 
 @bot.command()
