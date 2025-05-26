@@ -214,6 +214,10 @@ async def on_ready():
 
     print(f"✅ Logged in as {bot.user}")
 
+@bot.command()
+async def ver(ctx):
+    await ctx.send("**This software version is 1.1**")
+
 @bot.event
 async def on_message(message):
     if message.channel.id == UPLOAD_CHANNEL_ID and message.attachments:
