@@ -215,7 +215,7 @@ async def on_ready():
 
 @bot.command()
 async def ver(ctx):
-    await ctx.send("**This software version is 1.4**")
+    await ctx.send("**This software version is 1.5**")
 
 @bot.event
 async def on_message(message):
