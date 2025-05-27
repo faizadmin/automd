@@ -253,36 +253,31 @@ async def ver(ctx):
 @bot.event
 async def on_message(message):
     # Only listen in the upload channel for image attachments
-    if message.channel.id == UPLOAD_CHANNEL_ID and message.attachments:
-        for attachment in message.attachments:
-            if attachment.content_type and attachment.content_type.startswith("image/"):
-                embed = discord.Embed(title="📅 New Verification Request", color=discord.Color.blue())
-                embed.set_image(url=attachment.url)
-                embed.description = (
-                    f"👤 User: {message.author.mention}\n"
-                    f"🆔 ID: `{message.author.id}`\n\n"
-                    f"Please review the verification request below."
-                )
-                view = ChangeNameView(message.author)
-                mod_channel = bot.get_channel(MOD_CHANNEL_ID)
-                if mod_channel:
-                    msg = await mod_channel.send(embed=embed, view=view)
-                    # Map user ID to upload message ID to track later
-                    message_map[str(message.author.id)] = message.id
-                    save_data()
-    await bot.process_commands(message)
+    if message.channel.id == UPLOAD_CHANNEL_ID and message.attachments and not message.author.bot:
+        # Save message ID for the user to map for reactions etc.
+        message_map[str(message.author.id)] = message.id
+        save_data()
 
-@bot.command()
-async def top(ctx):
-    if not ctx.author.guild_permissions.manage_nicknames:
-        return await ctx.send("🚫 You don't have permission.")
-    if not mod_change_counts:
-        return await ctx.send("❌ No nickname changes.")
-    sorted_mods = sorted(mod_change_counts.items(), key=lambda x: x[1], reverse=True)
-    msg = "**🎖 Top Mods:**\n"
-    for i, (mod, count) in enumerate(sorted_mods, 1):
-        msg += f"{i}. **{mod}** — `{count}` names changed\n"
-    await ctx.send(msg)
+        # Create embed with user info and attached image
+        embed = discord.Embed(
+            title="New Verification Request",
+            color=discord.Color.gold(),
+            description=(
+                f"👤 User: {message.author.mention}\n"
+                f"🆔 ID: `{message.author.id}`\n\n"
+                "✅ Click 'Change Name' if verified.\n"
+                "❌ Click 'Cancel' if verification rejected."
+            )
+        )
+        embed.set_image(url=message.attachments[0].url)
+
+        # Send to mod channel with buttons
+        mod_channel = bot.get_channel(MOD_CHANNEL_ID)
+        if mod_channel:
+            view = ChangeNameView(message.author)
+            await mod_channel.send(embed=embed, view=view)
+
+    await bot.process_commands(message)
 
 @bot.command()
 async def his(ctx, user: discord.User = None):
@@ -304,5 +299,4 @@ async def his(ctx, user: discord.User = None):
     await ctx.send(text)
 
 bot.run(os.getenv("TOKEN"))
-
-
+            
